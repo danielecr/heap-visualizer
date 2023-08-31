@@ -2,6 +2,47 @@
 #include <stdlib.h>
 // this provide an heap with satellite information of void pointer.
 
+// #define PRINT_FULLNESS
+
+int biggerthan(const void *a, const void *b) {
+  int a1 = *(int *)a;
+  int b1 = *(int *)b;
+  if (a1 > b1) return -1;
+  if (a1 < b1) return 1;
+  return 0;
+}
+
+int smallerthan(const void *a, const void *b) {
+  int a1 = *(int *)a;
+  int b1 = *(int *)b;
+  if (a1 < b1) return -1;
+  if (a1 > b1) return 1;
+  return 0;
+}
+
+// The supporting data structure should have as key the same key (to extract
+// the min) and the index position as satellite information, to return the pos
+typedef struct {
+  void *data;
+  int pos;
+} augmented;
+
+augmented *augm_create(void *data, int pos) {
+  augmented *a = (augmented *)malloc(sizeof(augmented));
+  a->data = data;
+  a->pos = pos;
+  return a;
+}
+
+int smallerthan_aug(const void *a, const void *b) {
+  // this compare the augmented struct
+  int a1 = *(int *)(((augmented *)a)->data);
+  int b1 = *(int *)(((augmented *)b)->data);
+  if (a1 < b1) return -1;
+  if (a1 > b1) return 1;
+  return 0;
+}
+
 // this is used for storing indexes.
 // compare function is always the same: min preceeds a greater value.
 // Another way to state it: it is a Min-Heap
@@ -176,7 +217,7 @@ void *heap_extract(Heap *h) {
   // do something sensible in O(1)
   // Not possible: O(log n)
   if (h->size > 0) {
-    int res = h->data[0];
+    void *res = h->data[0];
     h->size--;
     h->data[0] = h->data[h->size];
     heap_heapify(h, 0);
@@ -216,48 +257,95 @@ int heap_find_elem_pos(Heap *h, void *data) {
   return -1;
 }
 
-int heap_find_elem_pos2(Heap *h, void *data) {
-  // assuming min level equal 1
-  MinHeapInt *h1 = minheapint_create(h->size);
-  minheapint_insert(h1, 0);
+int heap_find_elem_pos3(Heap *h, void *data) {
+  // The supporting data structure should have as key the same key (to extract
+  // the min) and the index position as satellite information, to return the pos
+  Heap *h1 = heap_create(smallerthan_aug, h->size);
+  augmented *a = augm_create(h->data[0], 0);
+  heap_insert(h1, a);
+  int step = 0;
   while (h1->size > 0) {
-    int idx = minheapint_extract(h1);
+    step++;
+    augmented *tocmp = heap_extract(h1);
+    int idx = tocmp->pos;
     int cmp = h->compare(h->data[idx], data);
+#ifdef PRINT_FULLNESS
     printf("at pos %d .. el: %d cmp: %d Fullness: %d\n", idx,
            *(int *)h->data[idx], cmp, h1->size);
+#endif
     if (cmp == 0) {
-      minheapint_free(&h1);
+      heap_free(&h1);
+      printf("STEPS: %d\n", step);
       return idx;
     }
     if (cmp < 0) {
       // insert in h1 the children
-      int left_i = (idx + 1) * 2;
-      int right_i = (idx + 1) * 2 + 1;
-      if (left_i < h->size && h->compare(h->data[left_i], data)) {
+      int left_i = (idx)*2 + 1;
+      int right_i = (idx)*2 + 2;
+      if (left_i < h->size && h->compare(h->data[left_i], data) <= 0) {
+#ifdef PRINT_FULLNESS
         printf("inserting %d\n", left_i);
+#endif
+        augmented *a = augm_create(h->data[left_i], left_i);
+        heap_insert(h1, a);
+      }
+      if (right_i < h->size && h->compare(h->data[right_i], data) <= 0) {
+#ifdef PRINT_FULLNESS
+        printf("inserting %d\n", right_i);
+#endif
+        augmented *a = augm_create(h->data[right_i], right_i);
+        heap_insert(h1, a);
+      }
+    }
+  }
+  heap_free(&h1);
+  return -1;
+}
+
+int heap_find_elem_pos2(Heap *h, void *data) {
+  // The supporting data structure should have as key the same key (to extract
+  // the min) and the index position as satellite information, to return the pos
+  MinHeapInt *h1 = minheapint_create(h->size);
+  minheapint_insert(h1, 0);
+  int step = 0;
+  while (h1->size > 0) {
+    step++;
+    int idx = minheapint_extract(h1);
+    int cmp = h->compare(h->data[idx], data);
+#ifdef PRINT_FULLNESS
+    printf("at pos %d .. el: %d cmp: %d Fullness: %d\n", idx,
+           *(int *)h->data[idx], cmp, h1->size);
+#endif
+    if (cmp == 0) {
+      minheapint_free(&h1);
+      printf("STEPS: %d\n", step);
+      return idx;
+    }
+    if (cmp < 0) {
+      // insert in h1 the children
+      int left_i = (idx)*2 + 1;
+      int right_i = (idx)*2 + 2;
+      if (left_i < h->size && h->compare(h->data[left_i], data) <= 0) {
+#ifdef PRINT_FULLNESS
+        printf("inserting %d\n", left_i);
+#endif
         minheapint_insert(h1, left_i);
       }
       if (right_i < h->size && h->compare(h->data[right_i], data) <= 0) {
+#ifdef PRINT_FULLNESS
         printf("inserting %d\n", right_i);
+#endif
         minheapint_insert(h1, right_i);
       }
     }
   }
-  minheapint_extract(h1);
+  minheapint_free(&h1);
   return -1;
 }
 
 inline void *heap_at_pos(Heap *h, int pos) {
   // return element at pos
   return h->data[pos];
-}
-
-int biggerthan(const void *a, const void *b) {
-  int a1 = *(int *)a;
-  int b1 = *(int *)b;
-  if (a1 > b1) return -1;
-  if (a1 < b1) return 1;
-  return 0;
 }
 
 char *formatint(const void *data) {
@@ -273,7 +361,7 @@ char *formatint(const void *data) {
 // How long is needed to create an arra of 100k, the order it?
 // Hint: stable input, so generate a file and read it
 
-int main() {
+int main_no() {
   Heap *h = heap_create(biggerthan, 100);
   int *e = (int *)malloc(sizeof(int));
   *e = 190;
@@ -292,8 +380,10 @@ int main() {
   printf("prova heap\n");
   heap_print(h, formatint);
 
-  int pose = heap_find_elem_pos2(h, &a);
+  int pose = heap_find_elem_pos3(h, &a);
   printf("position of %d is %d\n", a, pose);
+  int pose2 = heap_find_elem_pos2(h, &a);
+  printf("2position of %d is %d\n", a, pose2);
   heap_free(&h);
   return 0;
 }

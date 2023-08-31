@@ -1,11 +1,12 @@
 .PHONY: all
-CFLAGS=-Wall -Wextra -Werror -pedantic -std=c99 -g
+# CFLAGS=-Wall -Wextra -Werror -pedantic -std=c99 -g
+CFLAGS=-std=c99 -g
 SDLFLAGS=$(sdl2-config --cflags --libs)
 
-all: heap visualizer
+all: testheap visualizer
 
-heap: heap.o
-	$(CC) $(CFLAGS) -o heap heap.o
+testheap: heap.o testheap.c
+	$(CC) $(CFLAGS) -o testheap heap.o testheap.c
 
 visualizer.o: visualizer.c
 	$(CC) -c visualizer.c `sdl2-config --cflags --libs`

@@ -15,13 +15,13 @@ In the code Before == -1, Same == 0, After == 1
 
 **Insert**: O(log n)
 
-**FindPos**: O(log n)
+**FindPos**: O(n)
 
 **RemoveFirst**: O(log n)
 
 **RemovePos**: O(log n)
 
-## Find next-of
+### Find next-of
 
 Find the next. Use DSX (Data Structure X, DSX(top) is the biggest in DSX, DSX(top) costs O(1))
 
@@ -41,10 +41,30 @@ Find the next. Use DSX (Data Structure X, DSX(top) is the biggest in DSX, DSX(to
 
 And when the Next-of is at level>L? It must be looped for each level l>L also
 
-1. For (l=L+1; l>0; l--) do
+1. For (l=L+1; l< log n; l++) do
+  1.0. keep_desc = 0;
   1.1. for each n in NodeofLevel(l) do
        2.1.1. if (n>V && DSX(top)>n)? { DSX_replaceTop(n); replaced=1}
-       2.1.2. if (n<V)? keep_asc=1;
+       2.1.2. if (n>V)? keep_desc=1;
+
+...Find next is too much complex to be supported by the heap data structure in a easy (and efficient) way.
+
+### Remove first
+
+Everything follow the first, which is at level 0.
+
+At level 1 there are 2 elements, say A and B, A << B or B << A?
+
+In case A << B then each child of A can either << B or >> B, but every choise of them as
+sibling of B maintain the heap property `The parent node preceeds its children`
+
+Which of the l*2 elements children is the best candidate to be promoted as parent? the first.
+
+This procedure is `heapify`.
+
+The fact that `extract` take the last element and put it to the first position, does not influence
+the complexity. In fact `the last` can be seen as a placeholder for which it is true that every
+node can before it: a place that must be occupied by the best candidate.
 
 ## Tests and Benchmarks
 
@@ -144,8 +164,43 @@ A deletion is made of:
 * blinking of the two candidates for the position
 * selected candidate moving to fill the vacant position
 
+### Data structure <-> animation callback
+
+This is done by adding a pointer to a function that update the animation.
+
+Inside the heap data structure "method" (it's C, but ok) that function can be called with parameters:
+
+* char *cmd, index index, pos, ...
+
+TBD
+
+### Arranging a tree structure
+
+To arrange the tree structure that reppresente the heap there are info that can be used:
+
+1. number of nodes
+2. levels of the tree
+3. nr of elements for each level of the tree.
+
+Nr of nodes (1.) is required, while 2. and 3. can be derived.
+
+The procedure `arrange_tree(data, n)` has a reference to data, it does not require methods from the heap:
+
+1. calc the height (nr of levels) by counting required number of n shift to right to reach 0 (it is log n + 1)
+2. calc the weight by multiply 2 * levels (calculated in 1.)
+3. repeat for each level: arrange_level(i);
+
+arrange_level(i, center):
+
+0. far_from_center = (weight - 2^l) / 2 ;
+1. for (x=i*2+1; x<(i+1)*2; x++) do
+2. _  draw_box(i)
+3. _  if (i>0) arc_to_upper(x, x/2)
+
+
 
 https://wiki.libsdl.org/SDL2/Tutorials
 https://glusoft.com/sdl2-tutorials/
 
 
+https://www.jamesfmackenzie.com/2019/12/01/webassembly-graphics-with-sdl/
