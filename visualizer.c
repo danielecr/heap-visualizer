@@ -2,6 +2,34 @@
 
 // First objective for visualizer: visualize n element in a tree
 
+typedef struct {
+  SDL_Renderer *renderer;
+  int x;
+  int y;
+  int w;
+  int h;
+  int box_h;
+  int box_w;
+  int n_lines;
+} VHeapContext;
+
+VHeapContext *vheap_context_create(SDL_Renderer *renderer, int x, int y, int w,
+                                   int h, int box_h, int box_w, int n_lines) {
+  // this take renderer, x, y, width, height
+  VHeapContext *ctx = (VHeapContext *)malloc(sizeof(VHeapContext));
+  ctx->renderer = renderer;
+  ctx->x = x;
+  ctx->y = y;
+  ctx->w = w;
+  ctx->h = h;
+  ctx->box_h = box_h;
+  ctx->box_w = box_w;
+  ctx->n_lines = n_lines;
+  return ctx;
+}
+
+// vheap_context_arange_node(VHeapContext* ctx, )
+
 void visualize_tree(void *data, int n) {
   // find log n
   int logn = 1, x = n;
@@ -44,6 +72,57 @@ void visualize_tree(void *data, int n) {
   }
 }
 
+void vheap_draw_node(VHeapContext *ctx, int line, int slots, int pos) {
+  // now this function draw a node according to context and calculate coords
+  // based on line, slots (in a line) and pos
+  int calc_x = ctx->w / slots * pos;
+  SDL_Rect r;
+  r.h = ctx->box_h;
+  r.w = ctx->box_w;
+  r.x = ctx->x + calc_x - ctx->box_w / 2;
+  r.y = ctx->y + (ctx->h / ctx->n_lines) * line;
+  SDL_RenderDrawRect(ctx->renderer, &r);
+}
+
+void vheap_draw_link(VHeapContext *ctx, int to_line, int slots, int pos) {
+  // draw a link edge between node to_line pos, from the parent node.
+  // Parent node is easily calculated by
+  //     _       _
+  // 0, ,1, ,2, ,3
+  // 0,1,2,3,4,5,6,7
+  //   -   -   -   -
+  // pos == 1 => parent_pos ==1
+  // pos == 3 => parent_pos ==1
+  // pos == 5 => parent_pos ==3
+  // pos == 7 => parent_pos ==3
+
+  //   -   -   -   -
+  // pos == 0 => parent_pos ==0
+  // pos == 2 => parent_pos ==0
+  // pos == 4 => parent_pos ==2
+  // pos == 6 => parent_pos ==2
+
+  // the logical position of child is (pos-1)/2 (i.e.: 0,1,2,3)
+  // parent of 0 and 1 is (logical) 0, parent of 2 and 3 is (logical) 1
+  // logical 0 == 1, logical 1 == 3
+  int logi_child_p = ((pos - 1) >> 1);
+  int logi_parent_p = logi_child_p >> 1;
+  // printf("LOGI: %d %d\n", logi_child_p, logi_parent_p);
+
+  int parent_pos = 1;
+  for (int i = 0; i < logi_parent_p; i++) {
+    parent_pos += 2;
+  }
+  int parent_slots = slots >> 1;
+  int parent_x = ctx->w / parent_slots * parent_pos;
+  int parent_y = ctx->y + (ctx->h / ctx->n_lines) * (to_line - 1) + ctx->box_h;
+  // printf("%d %d %d %d\n", parent_pos, parent_slots, parent_x, parent_y);
+  int calc_x = ctx->w / slots * pos;
+  int target_x = ctx->x + calc_x;
+  int target_y = ctx->y + (ctx->h / ctx->n_lines) * to_line;
+  SDL_RenderDrawLine(ctx->renderer, parent_x, parent_y, target_x, target_y);
+}
+
 void draw_node_rect(SDL_Renderer *renderer, int x, int y, void *data) {
   // this draw a rectangle in the screen at the middle top position x,y
   // (and eventually render text and other provided in data, TBD howto)
@@ -65,13 +144,15 @@ void draw_tree(SDL_Renderer *renderer, int n) {
     x >>= 1;
   }
   // int width = (1 << (logn - 2)) * 3;
+  VHeapContext *ctx =
+      vheap_context_create(renderer, 0, 400, 900, 400, 10, 20, logn);
   int width = 900;
   printf("LEVELS:%d widht:%d\n", --logn, width);
   // now there is an heigh
   int line_height = 400 / logn;
 
   int lst_of_lvl = 1;
-  int why = 400;
+  int line = 0;
   while (lst_of_lvl <= n) {
     // for (int i = 0; i < padding * fa; i++) printf(" ");
     //   in this level there are lst_of_lvl-1 nodes
@@ -87,26 +168,28 @@ void draw_tree(SDL_Renderer *renderer, int n) {
     // etc. So if level has n node, it needs n*2 position (or n<<1).
     // Padding. By this schema, last level will have the maximum number
     // of nodes in a raw
-    int spacing = width / (lst_of_lvl << 1);
-    printf("SPACING::: %d\n", spacing);
-    int ex = spacing;
+    int pos = 1;
     for (int i = first; i < first + lst_of_lvl && i < n; i++) {
       // if (i > first)
       // for (int j = 0; j < spacing * 2 - 2; j++) printf(" ");
-      draw_node_rect(renderer, ex, why, NULL);
-      printf("DRAW RECT %d %d\n", ex, why);
-      ex += (spacing * 2);
+      // draw_node_rect(renderer, ex, why, NULL);
+      vheap_draw_node(ctx, line, lst_of_lvl << 1, pos);
+      // printf("DRAW RECT %d %d\n", ex, why);
       // printf("%03d", i);
       if (i > 0) {
         // in this case, link the drawn node to the higher level
+        // Now it become evident the needs of a supporting object,
+        // a kind of "context", I name it VHeapContext, and I add as many
+        // information as it makes sense to hold in the context
         // link_nodes(ex, why);
-        printf("it is anotherline %d\n", i);
+        // printf("it is anotherline %d; line:%d lvl:%d pos:%d\n", i, line,
+        //       lst_of_lvl, pos);
+        vheap_draw_link(ctx, line, lst_of_lvl << 1, pos);
       }
+      pos += 2;
     }
-    printf("\t%d\n", spacing);
+    line++;
     lst_of_lvl = lst_of_lvl ? lst_of_lvl <<= 1 : 1;
-    spacing >>= 1;
-    why += line_height;
   }
 }
 
