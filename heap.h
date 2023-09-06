@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 int biggerthan(const void *a, const void *b);
 int smallerthan(const void *a, const void *b);
 
