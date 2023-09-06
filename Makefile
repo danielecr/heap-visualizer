@@ -11,5 +11,5 @@ testheap: heap.o testheap.c
 visualizer.o: visualizer.c
 	$(CC) -c visualizer.c `sdl2-config --cflags --libs`
 
-visualizer: visualizer.o
-	$(CC) -o visualizer visualizer.o `sdl2-config --cflags --libs`
+visualizer: visualizer.o heap.o
+	$(CC) -o visualizer visualizer.o heap.o `sdl2-config --cflags --libs` -lSDL2_ttf
