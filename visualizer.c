@@ -105,14 +105,11 @@ void vheap_draw_link(VHeapContext *ctx, int to_line, int slots, int pos) {
   // the logical position of child is (pos-1)/2 (i.e.: 0,1,2,3)
   // parent of 0 and 1 is (logical) 0, parent of 2 and 3 is (logical) 1
   // logical 0 == 1, logical 1 == 3
-  int logi_child_p = ((pos - 1) >> 1);
-  int logi_parent_p = logi_child_p >> 1;
-  // printf("LOGI: %d %d\n", logi_child_p, logi_parent_p);
+  // int logi_child_p = ((pos - 1) >> 1);
+  // int logi_parent_p = logi_child_p >> 1;
+  // int parent_pos = (logi_parent_p << 1) + 1;
+  int parent_pos = (((pos - 1) >> 2) << 1) + 1;
 
-  int parent_pos = 1;
-  for (int i = 0; i < logi_parent_p; i++) {
-    parent_pos += 2;
-  }
   int parent_slots = slots >> 1;
   int parent_x = ctx->w / parent_slots * parent_pos;
   int parent_y = ctx->y + (ctx->h / ctx->n_lines) * (to_line - 1) + ctx->box_h;
@@ -145,7 +142,7 @@ void draw_tree(SDL_Renderer *renderer, int n) {
   }
   // int width = (1 << (logn - 2)) * 3;
   VHeapContext *ctx =
-      vheap_context_create(renderer, 0, 400, 900, 400, 10, 20, logn);
+      vheap_context_create(renderer, 0, 200, 900, 600, 10, 20, logn);
   int width = 900;
   printf("LEVELS:%d widht:%d\n", --logn, width);
   // now there is an heigh
@@ -222,11 +219,7 @@ int main(int argc, char **argv) {
   }
   SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
   SDL_RenderClear(renderer);
-  SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
-  SDL_RenderDrawLine(renderer, 0, 0, 300, 300);
-  SDL_RenderDrawLine(renderer, 0, 400, 700, 400);
-  SDL_Rect x;
-  // draw_node_rect(renderer, 400, 400, NULL);
+  SDL_SetRenderDrawColor(renderer, 200, 200, 200, 255);
   draw_tree(renderer, nodes);
   // SDL_Rect *r = SDL_Rect
   // SDL_RenderDrawRect();

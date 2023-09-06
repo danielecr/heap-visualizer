@@ -3,7 +3,27 @@
 
 #include "heap.h"
 
+void test_heap(int elem) {
+  //
+  Heap *h = heap_create(biggerthan, 100);
+  int *values = (int *)malloc(elem * sizeof(int));
+  for (int i = 0; i < elem; i++) {
+    values[i] = rand();
+  }
+  for (int i = 0; i < 10 && i < elem; i++) {
+    heap_insert(h, &values[i]);
+  }
+  heap_print(h, formatint);
+  for (int i = 10; i < elem; i++) {
+    heap_insert(h, &values[i]);
+  }
+  heap_print(h, formatint);
+  heap_free(&h);
+  free(values);
+}
+
 int main() {
+  test_heap(19);
   Heap *h = heap_create(biggerthan, 100);
   int *e = (int *)malloc(sizeof(int));
   *e = 190;
