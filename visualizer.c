@@ -22,15 +22,17 @@ VHeapContext *vheap_context_create(SDL_Renderer *renderer, int x, int y, int w,
                                    TTF_Font *font) {
   // this take renderer, x, y, width, height
   VHeapContext *ctx = (VHeapContext *)malloc(sizeof(VHeapContext));
-  ctx->renderer = renderer;
-  ctx->x = x;
-  ctx->y = y;
-  ctx->w = w;
-  ctx->h = h;
-  ctx->box_h = box_h;
-  ctx->box_w = box_w;
-  ctx->n_lines = n_lines;
-  ctx->font = font;
+  *ctx = (VHeapContext){
+      .renderer = renderer,
+      .x = x,
+      .y = y,
+      .w = w,
+      .h = h,
+      .box_h = box_h,
+      .box_w = box_w,
+      .n_lines = n_lines,
+      .font = font,
+  };
   return ctx;
 }
 
@@ -79,17 +81,14 @@ void visualize_tree(void *data, int n) {
 }
 
 void render_content(VHeapContext *ctx, char *content, int x, int y) {
-  SDL_Rect r;
-  SDL_Color col;
-  col.r = 255;
-  col.g = 255;
-  col.b = 255;
-  col.a = 255;
+  SDL_Color col = {.r = 255, .g = 255, .b = 255, .a = 255};
   SDL_Surface *sur = TTF_RenderText_Blended(ctx->font, content, col);
-  r.x = x;
-  r.y = y;
-  r.w = sur->w;
-  r.h = sur->h;
+  SDL_Rect r = {
+      .x = x,
+      .y = y,
+      .w = sur->w,
+      .h = sur->h,
+  };
   SDL_Texture *tex = SDL_CreateTextureFromSurface(ctx->renderer, sur);
   SDL_FreeSurface(sur);
   SDL_RenderCopy(ctx->renderer, tex, NULL, &r);
@@ -233,6 +232,7 @@ void draw_heap(SDL_Renderer *renderer, Heap *h) {
 
   int lst_of_lvl = 1;
   int line = 0;
+  char *content = (char *)malloc(sizeof(char) * 15);
   while (lst_of_lvl <= n) {
     // for (int i = 0; i < padding * fa; i++) printf(" ");
     //   in this level there are lst_of_lvl-1 nodes
@@ -252,7 +252,6 @@ void draw_heap(SDL_Renderer *renderer, Heap *h) {
     for (int i = first; i < first + lst_of_lvl && i < n; i++) {
       // if (i > first)
       // for (int j = 0; j < spacing * 2 - 2; j++) printf(" ");
-      char *content = (char *)malloc(sizeof(char) * 12);
       sprintf(content, "%d", *((int *)h->data[i]));
       vheap_draw_node(ctx, line, lst_of_lvl << 1, pos, content);
       // printf("DRAW RECT %d %d\n", ex, why);
@@ -272,6 +271,7 @@ void draw_heap(SDL_Renderer *renderer, Heap *h) {
     line++;
     lst_of_lvl = lst_of_lvl ? lst_of_lvl <<= 1 : 1;
   }
+  free(content);
   // render_content(ctx, "ciao");
 }
 

@@ -93,8 +93,7 @@ void minheapint_insert(MinHeapInt *h, int e) {
   h->size++;
 
   if (h->size > 1) {
-    for (int i = h->size / 2 - 1; i >= 0; i--)
-      minheapint_heapify(h, h->size / 2 - 1);
+    for (int i = h->size / 2 - 1; i >= 0; i--) minheapint_heapify(h, i);
   }
 }
 
@@ -185,7 +184,7 @@ void heap_insert(Heap *h, void *data) {
   h->size++;
 
   if (h->size > 1) {
-    for (int i = h->size / 2 - 1; i >= 0; i--) heap_heapify(h, h->size / 2 - 1);
+    for (int i = h->size / 2 - 1; i >= 0; i--) heap_heapify(h, i);
   }
   if (h->capacity < h->size + 10) {
     // che hai?
@@ -351,7 +350,7 @@ inline void *heap_at_pos(Heap *h, int pos) {
 char *formatint(const void *data) {
   // data
   int a1 = *(int *)data;
-  char *out = (char *)malloc(8 * sizeof(char));
+  char *out = (char *)malloc(12 * sizeof(char));
   sprintf(out, "%d", a1);
   return out;
 }
