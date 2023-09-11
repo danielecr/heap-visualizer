@@ -29,8 +29,7 @@ typedef struct {
 
 augmented *augm_create(void *data, int pos) {
   augmented *a = (augmented *)malloc(sizeof(augmented));
-  a->data = data;
-  a->pos = pos;
+  *a = (augmented){.data = data, .pos = pos};
   return a;
 }
 
@@ -55,9 +54,9 @@ typedef struct {
 
 MinHeapInt *minheapint_create(int capacity) {
   MinHeapInt *h = (MinHeapInt *)malloc(sizeof(MinHeapInt));
-  h->capacity = capacity;
-  h->data = (int *)calloc(sizeof(int *), capacity);
-  h->size = 0;
+  *h = (MinHeapInt){.capacity = capacity,
+                    .data = (int *)calloc(sizeof(int *), capacity),
+                    .size = 0};
   return h;
 }
 
@@ -143,10 +142,12 @@ typedef struct {
 
 Heap *heap_create(int (*compare)(const void *, const void *), int capacity) {
   Heap *h = malloc(sizeof(Heap));
-  h->compare = compare;
-  h->capacity = capacity;
-  h->data = calloc(sizeof(void *), capacity);
-  h->size = 0;
+  *h = (Heap){
+      .compare = compare,
+      .capacity = capacity,
+      .data = calloc(sizeof(void *), capacity),
+      .size = 0,
+  };
   return h;
 }
 
