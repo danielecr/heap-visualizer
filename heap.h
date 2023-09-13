@@ -1,5 +1,5 @@
 #include <stdlib.h>
-
+typedef int (*__compar_fn_t)(const void *, const void *);
 int biggerthan(const void *a, const void *b);
 int smallerthan(const void *a, const void *b);
 

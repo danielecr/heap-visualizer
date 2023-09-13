@@ -1,3 +1,5 @@
+// #include "heap.h"
+typedef int (*__compar_fn_t)(const void *, const void *);
 #include <stdio.h>
 #include <stdlib.h>
 // this provide an heap with satellite information of void pointer.

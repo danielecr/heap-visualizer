@@ -1,7 +1,14 @@
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include <emscripten.h>
+#include <stdlib.h>
 
 #include "heap.h"
+
+#define BOX_HEIGHT 16
+#define BOX_WIDTH 80
+
+TTF_Font *font;
 
 // First objective for visualizer: visualize n element in a tree
 
@@ -75,7 +82,7 @@ void visualize_tree(void *data, int n) {
       printf("%03d", i);
     }
     printf("\t%d\n", spacing);
-    lst_of_lvl = lst_of_lvl ? lst_of_lvl <<= 1 : 1;
+    lst_of_lvl <<= 1;
     spacing >>= 1;
   }
 }
@@ -155,7 +162,6 @@ void draw_tree(SDL_Renderer *renderer, int n) {
     x >>= 1;
   }
   // int width = (1 << (logn - 2)) * 3;
-  TTF_Font *font = TTF_OpenFont("Resources/Roboto-Bold.ttf", 13);
 
   VHeapContext *ctx =
       vheap_context_create(renderer, 50, 200, 1200, 600, 16, 20, logn, font);
@@ -205,7 +211,7 @@ void draw_tree(SDL_Renderer *renderer, int n) {
       pos += 2;
     }
     line++;
-    lst_of_lvl = lst_of_lvl ? lst_of_lvl <<= 1 : 1;
+    lst_of_lvl <<= 1;
   }
   // render_content(ctx, "ciao");
 }
@@ -219,14 +225,13 @@ void draw_heap(SDL_Renderer *renderer, Heap *h) {
     x >>= 1;
   }
   // int width = (1 << (logn - 2)) * 3;
-  TTF_Font *font = TTF_OpenFont("Resources/Roboto-Bold.ttf", 13);
 
-  VHeapContext *ctx =
-      vheap_context_create(renderer, 50, 200, 1200, 600, 16, 20, logn, font);
+  VHeapContext *ctx = vheap_context_create(renderer, 50, 200, 1200, 600,
+                                           BOX_HEIGHT, BOX_WIDTH, logn, font);
   // SDL_RenderPresent(ctx->renderer);
   // render_content(ctx, "ciao");
   int width = 900;
-  printf("LEVELS:%d widht:%d\n", --logn, width);
+  // printf("LEVELS:%d widht:%d\n", --logn, width);
   // now there is an heigh
   int line_height = 400 / logn;
 
@@ -269,19 +274,24 @@ void draw_heap(SDL_Renderer *renderer, Heap *h) {
       pos += 2;
     }
     line++;
-    lst_of_lvl = lst_of_lvl ? lst_of_lvl <<= 1 : 1;
+    lst_of_lvl <<= 1;
   }
   free(content);
+  free(ctx);
   // render_content(ctx, "ciao");
 }
 
-int main(int argc, char **argv) {
+SDL_Renderer *renderer;
+Heap *h;
+
+void drawRandomPixels() {
+  // here run the render
+  draw_heap(renderer, h);
+  SDL_RenderPresent(renderer);
+}
+
+int main() {
   int nodes = 33;
-  if (argc > 1) {
-    int n = atoi(argv[1]);
-    if (n) nodes = n;
-    printf("ARG: %s\n", argv[1]);
-  }
   visualize_tree(NULL, nodes);
   // return 1;
   //  this use sdl to visualize something
@@ -290,6 +300,7 @@ int main(int argc, char **argv) {
     return 1;
   }
   TTF_Init();
+  font = TTF_OpenFont("Resources/Roboto-Bold.ttf", 13);
   SDL_Window *window =
       SDL_CreateWindow("Visualize HEAP", SDL_WINDOWPOS_CENTERED,
                        SDL_WINDOWPOS_CENTERED, 1300, 800, 0);
@@ -297,14 +308,15 @@ int main(int argc, char **argv) {
     printf("error %s\n", SDL_GetError());
     return 1;
   }
-  SDL_Renderer *renderer =
-      SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+  // SDL_Renderer *
+  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
   if (renderer == NULL) {
     printf("Renderer error %s\n", SDL_GetError());
     return 1;
   }
   int elem = nodes;
-  Heap *h = heap_create(biggerthan, 100);
+  // Heap *
+  h = heap_create(biggerthan, 100);
   int *values = (int *)malloc(elem * sizeof(int));
   for (int i = 0; i < elem; i++) {
     values[i] = rand();
@@ -327,6 +339,8 @@ int main(int argc, char **argv) {
   // SDL_RenderDrawRect();
   SDL_RenderPresent(renderer);
   // SDL_RenderPresent(renderer);
+
+  emscripten_set_main_loop(drawRandomPixels, 10, 1);
 
   // SDL_Delay(2000);
   while (1) {

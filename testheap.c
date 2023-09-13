@@ -19,11 +19,15 @@ void test_heap(int elem) {
   }
   heap_print(h, formatint);
   heap_free(&h);
+  for (int i = 0; i < elem; i++) {
+    printf("DATA[%d]: %d\n", i, (int)values[i]);
+  }
   free(values);
 }
 
 int main() {
   test_heap(19);
+  return 0;
   Heap *h = heap_create(biggerthan, 100);
   int *e = (int *)malloc(sizeof(int));
   *e = 190;

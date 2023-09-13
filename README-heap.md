@@ -78,25 +78,25 @@ https://www.geeksforgeeks.org/cache-oblivious-algorithm/
 The objective of visual reppresentation is to show the operations made during heap insertion, search, deletion, and so on.
 
 So, every element should be reppresentable by a `Box`, every `Box` should have a `Text caption` inside, and maybe including
-some graphical sign or no-a-letter glyph to separate infos.
+some graphical sign or not-a-letter glyph to separate infos.
 
-Each Box should be linked with other (say parents and/or children) by an `Arc`. An `Arc` is a line has a sourceBox and
-a targetBox. It should be possible to draw the `Arc` satisfying the requirement of "not passing through the Box.
+Each Box should be linked with other (say parents and/or children) by an `Edge`. An `Edge` is a line has a sourceBox and
+a targetBox. It should be possible to draw the `Edge` satisfying the requirement of "not passing through the Box.
 
-To warrant this property, the drawing system must know where is the `Box` and where is the `Arc`, relative to each other.
+To warrant this property, the drawing system must know where is the `Box` and where is the `Edge`, relative to each other.
 
 For example:
 
-* is the `Arc` _above_ the `Box`? then the line of the `Arc` is attached to the _top_ line of the `Box`
-* is the `Arc` _below_ the `Box`? then the line of the `Arc` is attached to the _bottom_ line of the `Box`
+* is the `Edge` _above_ the `Box`? then the line of the `Edge` is attached to the _top_ line of the `Box`
+* is the `Edge` _below_ the `Box`? then the line of the `Edge` is attached to the _bottom_ line of the `Box`
 
 Is there any other option? Nope. To estabilish the _above_ property of 2 graphical elements it can be used Geometrical computing
-technics, or this could be defined by the domain itself. Let's say that an `Arc` is identified by its link from the parent Box,
+technics, or this could be defined by the domain itself. Let's say that an `Edge` is identified by its link from the parent Box,
 to the children Box, and let's say that the visualization of the tree goes from top to the bottom, parent to children.
 
-So, easily the `Arc` is attached to the bottom of the parent Box (source), and to the top of the child Box (target).
+So, easily the `Edge` is attached to the bottom of the parent Box (source), and to the top of the child Box (target).
 
-Drawing an `Arc` translate to:
+Drawing an `Edge` translate to:
 
 * find the middle of the bottom of the Box of the origin
 * find the middle of the top of the Box of the target
@@ -168,7 +168,7 @@ A deletion is made of:
 
 This is done by adding a pointer to a function that update the animation.
 
-Inside the heap data structure "method" (it's C, but ok) that function can be called with parameters:
+The heap data structure has a pointer to func, that, when not NULL, is called with parameters:
 
 * char *cmd, index index, pos, ...
 
@@ -203,4 +203,60 @@ https://wiki.libsdl.org/SDL2/Tutorials
 https://glusoft.com/sdl2-tutorials/
 
 
+## producing wasm
+
 https://www.jamesfmackenzie.com/2019/12/01/webassembly-graphics-with-sdl/
+
+first error:
+```
+Traceback (most recent call last):
+  File "/usr/share/emscripten/emcc.py", line 3947, in <module>
+    sys.exit(main(sys.argv))
+             ^^^^^^^^^^^^^^
+```
+
+it does not like command line argument. (nobody love arguments, ok)
+
+
+(somewhere at the end):
+```
+PermissionError: [Errno 13] Permission denied: '/usr/share/emscripten/cache/ports'
+make: *** [Makefile:18: visualizer-wasm.o] Error 1
+```
+
+look at https://github.com/emscripten-core/emscripten/issues/11313
+
+```
+You can also set EM_CONFIG=$HOME/.emscripten to solve this issue.
+```
+
+So:
+
+> export EM_CONFIG=$HOME/.emscripten
+
+```
+emcc -c visualizer-wasm.c -o visualizer-wasm.o -s USE_SDL=2
+emcc: error: clang executable not found at `/usr/bin/clang`
+make: *** [Makefile:18: visualizer-wasm.o] Error 1
+```
+
+(... I had to do some guess work here, then)
+
+`~/.emscripten` should contain something like
+
+```
+LLVM_ROOT = "/usr/lib/llvm-14/bin"
+BINARYEN_ROOT = "/usr/bin"
+NODE_JS= "/usr/bin/nodejs"
+```
+
+This:
+
+> $ emcc --show-ports
+
+is the power tool for emcc, it lists all ports available, so I can specify
+
+
+## document code
+
+Use https://www.doxygen.nl/manual/starting.html
