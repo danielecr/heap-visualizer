@@ -1,0 +1,10 @@
+*
+!.gitignore
+!Makefile
+!*.md
+!*.c
+!*.h
+!serve/
+!Resources/
+serve/data/
+!serve/data/.placeholder
